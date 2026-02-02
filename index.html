@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>滑梯棋</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setup-screen">
+        <h1>滑梯棋</h1>
+        <div id="player-count-section">
+            <label for="player-count">參與者數量：</label>
+            <select id="player-count">
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+        </div>
+        <div id="player-settings"></div>
+        <button id="start-btn">開始遊戲</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden">
+        <div id="game-layout">
+            <div id="board-container">
+                <canvas id="board-canvas"></canvas>
+            </div>
+            <div id="side-panel">
+                <div id="info-panel">
+                    <div id="current-turn"></div>
+                    <div id="player-positions"></div>
+                </div>
+                <div id="spinner-container">
+                    <canvas id="spinner-canvas"></canvas>
+                    <div id="spin-hint">點擊轉盤</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Screen Overlay -->
+    <div id="win-screen" class="hidden">
+        <div id="win-content">
+            <h2 id="win-message"></h2>
+            <button id="restart-btn">再玩一次</button>
+        </div>
+    </div>
+
+    <script src="js/board.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/spinner.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
