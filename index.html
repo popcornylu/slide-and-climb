@@ -11,17 +11,29 @@
 <body>
     <!-- Setup Screen -->
     <div id="setup-screen">
-        <h1>滑梯棋</h1>
-        <div id="player-count-section">
-            <label for="player-count">參與者數量：</label>
-            <select id="player-count">
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-            </select>
+        <!-- Step 1: Player Count -->
+        <div id="step1-player-count">
+            <h1>滑梯棋</h1>
+            <div class="step-content">
+                <p class="step-label">選擇玩家數量：</p>
+                <div id="player-count-buttons">
+                    <button class="count-btn" data-count="2">2</button>
+                    <button class="count-btn selected" data-count="3">3</button>
+                    <button class="count-btn" data-count="4">4</button>
+                </div>
+            </div>
+            <button id="next-step-btn">下一步</button>
         </div>
-        <div id="player-settings"></div>
-        <button id="start-btn">開始遊戲</button>
+
+        <!-- Step 2: Player Settings -->
+        <div id="step2-player-settings" class="hidden">
+            <h1>滑梯棋</h1>
+            <div id="player-cards"></div>
+            <div class="step2-buttons">
+                <button id="back-btn">返回</button>
+                <button id="start-btn">開始遊戲</button>
+            </div>
+        </div>
     </div>
 
     <!-- Game Screen -->

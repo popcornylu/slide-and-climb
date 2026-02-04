@@ -8,9 +8,17 @@ const Game = (() => {
     let gameActive = false;
     let isProcessing = false;
 
+    // Turn order determination phase
+    let turnOrderPhase = false;
+    let firstPlayerIdx = 0;
+
+    // Setup state
+    let selectedPlayerCount = 3;
+    let playerColorIndices = [0, 1, 2, 3]; // Each player's color index
+
     // DOM elements (initialized in init())
     let setupScreen, gameScreen, winScreen, winMessage;
-    let playerCountSelect, playerSettings, startBtn, restartBtn;
+    let step1, step2, playerCards, startBtn, restartBtn, nextStepBtn, backBtn;
     let currentTurnDiv, playerPositionsDiv, spinHint;
 
     function init() {
@@ -18,15 +26,28 @@ const Game = (() => {
         gameScreen = document.getElementById('game-screen');
         winScreen = document.getElementById('win-screen');
         winMessage = document.getElementById('win-message');
-        playerCountSelect = document.getElementById('player-count');
-        playerSettings = document.getElementById('player-settings');
+        step1 = document.getElementById('step1-player-count');
+        step2 = document.getElementById('step2-player-settings');
+        playerCards = document.getElementById('player-cards');
         startBtn = document.getElementById('start-btn');
         restartBtn = document.getElementById('restart-btn');
+        nextStepBtn = document.getElementById('next-step-btn');
+        backBtn = document.getElementById('back-btn');
         currentTurnDiv = document.getElementById('current-turn');
         playerPositionsDiv = document.getElementById('player-positions');
         spinHint = document.getElementById('spin-hint');
 
-        playerCountSelect.addEventListener('change', updatePlayerSettings);
+        // Player count buttons
+        document.querySelectorAll('.count-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedPlayerCount = parseInt(btn.dataset.count);
+            });
+        });
+
+        nextStepBtn.addEventListener('click', showStep2);
+        backBtn.addEventListener('click', showStep1);
         startBtn.addEventListener('click', startGame);
         restartBtn.addEventListener('click', restartGame);
 
@@ -34,7 +55,6 @@ const Game = (() => {
         Spinner.init(document.getElementById('spinner-canvas'));
         Spinner.setOnResult(onSpinResult);
 
-        updatePlayerSettings();
         handleResize();
         window.addEventListener('resize', handleResize);
         window.addEventListener('orientationchange', () => {
@@ -42,21 +62,68 @@ const Game = (() => {
         });
     }
 
-    function updatePlayerSettings() {
-        const count = parseInt(playerCountSelect.value);
-        playerSettings.innerHTML = '';
+    function showStep1() {
+        step1.classList.remove('hidden');
+        step2.classList.add('hidden');
+    }
 
-        for (let i = 0; i < count; i++) {
-            const div = document.createElement('div');
-            div.className = 'player-setting';
+    function showStep2() {
+        step1.classList.add('hidden');
+        step2.classList.remove('hidden');
+        // Reset color assignments
+        playerColorIndices = [0, 1, 2, 3];
+        updatePlayerCards();
+    }
 
-            const colorDot = document.createElement('span');
-            colorDot.className = 'color-dot';
-            colorDot.style.backgroundColor = PLAYER_COLORS[i];
+    function getUsedColorIndices(excludePlayer) {
+        const used = [];
+        for (let i = 0; i < selectedPlayerCount; i++) {
+            if (i !== excludePlayer) {
+                used.push(playerColorIndices[i]);
+            }
+        }
+        return used;
+    }
 
-            const label = document.createElement('span');
-            label.className = 'player-label';
-            label.textContent = `P${i + 1} (${PLAYER_COLOR_NAMES[i]})`;
+    function getNextAvailableColor(currentColorIndex, excludePlayer) {
+        const used = getUsedColorIndices(excludePlayer);
+        let nextIndex = (currentColorIndex + 1) % 4;
+        while (used.includes(nextIndex)) {
+            nextIndex = (nextIndex + 1) % 4;
+        }
+        return nextIndex;
+    }
+
+    function updatePlayerCards() {
+        playerCards.innerHTML = '';
+
+        for (let i = 0; i < selectedPlayerCount; i++) {
+            const card = document.createElement('div');
+            card.className = 'player-card';
+
+            const header = document.createElement('div');
+            header.className = 'player-card-header';
+            header.textContent = `P${i + 1}`;
+
+            const colorSelector = document.createElement('div');
+            colorSelector.className = 'color-selector';
+            colorSelector.style.backgroundColor = PLAYER_COLORS[playerColorIndices[i]];
+            colorSelector.dataset.playerIndex = i;
+            colorSelector.addEventListener('click', () => {
+                const playerIdx = parseInt(colorSelector.dataset.playerIndex);
+                playerColorIndices[playerIdx] = getNextAvailableColor(playerColorIndices[playerIdx], playerIdx);
+                colorSelector.style.backgroundColor = PLAYER_COLORS[playerColorIndices[playerIdx]];
+                colorLabel.textContent = PLAYER_COLOR_NAMES[playerColorIndices[playerIdx]];
+            });
+
+            const colorLabel = document.createElement('span');
+            colorLabel.className = 'color-label';
+            colorLabel.textContent = PLAYER_COLOR_NAMES[playerColorIndices[i]];
+
+            const colorRow = document.createElement('div');
+            colorRow.className = 'color-row';
+            colorRow.appendChild(colorSelector);
+            colorRow.appendChild(colorLabel);
 
             const toggle = document.createElement('button');
             toggle.className = 'type-toggle';
@@ -68,27 +135,32 @@ const Game = (() => {
                 toggle.textContent = !isComp ? '電腦' : '玩家';
             });
 
-            div.appendChild(colorDot);
-            div.appendChild(label);
-            div.appendChild(toggle);
-            playerSettings.appendChild(div);
+            card.appendChild(header);
+            card.appendChild(colorRow);
+            card.appendChild(toggle);
+            playerCards.appendChild(card);
         }
     }
 
     function startGame() {
-        const count = parseInt(playerCountSelect.value);
         players = [];
 
-        const toggles = playerSettings.querySelectorAll('.type-toggle');
-        for (let i = 0; i < count; i++) {
+        const toggles = playerCards.querySelectorAll('.type-toggle');
+        for (let i = 0; i < selectedPlayerCount; i++) {
             const isComputer = toggles[i].dataset.isComputer === 'true';
             const name = `P${i + 1}`;
-            players.push(new Player(i, name, PLAYER_COLORS[i], isComputer));
+            const colorIndex = playerColorIndices[i];
+            players.push(new Player(i, name, PLAYER_COLORS[colorIndex], isComputer));
+            players[i].colorIndex = colorIndex;
         }
 
         currentPlayerIdx = 0;
-        gameActive = true;
+        gameActive = false;
         isProcessing = false;
+
+        // Start turn order determination phase
+        turnOrderPhase = true;
+        firstPlayerIdx = 0;
 
         Board.generateBoard();
 
@@ -99,16 +171,79 @@ const Game = (() => {
         // Short delay to ensure layout is ready after display change
         requestAnimationFrame(() => {
             handleResize();
+            startTurnOrderSpin();
+        });
+    }
+
+    function startTurnOrderSpin() {
+        // Set spinner to player mode
+        Spinner.setPlayerMode(players);
+        Spinner.setEnabled(false);
+
+        currentTurnDiv.innerHTML = `<span class="turn-indicator">🎲 決定誰先開始...</span>`;
+
+        let posHtml = '<div class="turn-order-title">參賽玩家：</div>';
+        players.forEach(p => {
+            const colorName = PLAYER_COLOR_NAMES[p.colorIndex];
+            posHtml += `<div class="player-pos" style="border-left: 4px solid ${p.color}">` +
+                `${p.name} (${colorName})${p.isComputer ? ' 🤖' : ''}</div>`;
+        });
+        playerPositionsDiv.innerHTML = posHtml;
+
+        spinHint.textContent = '轉動中...';
+
+        // Auto spin after a short delay
+        setTimeout(() => {
+            Spinner.triggerSpin();
+        }, 800);
+    }
+
+    function onTurnOrderResult(winnerIdx) {
+        const winner = players[winnerIdx];
+        const winnerColorName = PLAYER_COLOR_NAMES[winner.colorIndex];
+
+        spinHint.textContent = `${winner.name} (${winnerColorName}) 先開始！`;
+        currentTurnDiv.innerHTML = `<span class="turn-indicator" style="color:${winner.color}">` +
+            `🎉 ${winner.name} (${winnerColorName}) 先開始！</span>`;
+
+        // Reorder players so winner goes first
+        // e.g., if winnerIdx=2 and we have [P1,P2,P3,P4], new order is [P3,P4,P1,P2]
+        const reordered = [];
+        for (let i = 0; i < players.length; i++) {
+            reordered.push(players[(winnerIdx + i) % players.length]);
+        }
+        players = reordered;
+
+        // Show final order
+        let posHtml = '<div class="turn-order-title">遊戲順序：</div>';
+        players.forEach((p, idx) => {
+            const colorName = PLAYER_COLOR_NAMES[p.colorIndex];
+            posHtml += `<div class="player-pos" style="border-left: 4px solid ${p.color}">` +
+                `${idx + 1}. ${p.name} (${colorName})${p.isComputer ? ' 🤖' : ''}</div>`;
+        });
+        playerPositionsDiv.innerHTML = posHtml;
+
+        setTimeout(() => {
+            // Switch spinner back to number mode
+            Spinner.setNumberMode();
+
+            // End turn order phase, start actual game
+            turnOrderPhase = false;
+            currentPlayerIdx = 0;
+            gameActive = true;
             updateUI();
             startTurn();
-        });
+        }, 2000);
     }
 
     function restartGame() {
         winScreen.classList.add('hidden');
         gameScreen.classList.add('hidden');
         setupScreen.classList.remove('hidden');
+        showStep1();
         gameActive = false;
+        turnOrderPhase = false;
+        Spinner.setNumberMode();
     }
 
     function handleResize() {
@@ -145,13 +280,15 @@ const Game = (() => {
         if (!gameActive) return;
 
         const cp = players[currentPlayerIdx];
+        const cpColorName = PLAYER_COLOR_NAMES[cp.colorIndex];
         currentTurnDiv.innerHTML = `<span class="turn-indicator" style="color:${cp.color}">` +
-            `▶ ${cp.name} (${PLAYER_COLOR_NAMES[cp.index]}) 的回合</span>`;
+            `▶ ${cp.name} (${cpColorName}) 的回合</span>`;
 
         let posHtml = '';
         players.forEach(p => {
+            const colorName = PLAYER_COLOR_NAMES[p.colorIndex];
             posHtml += `<div class="player-pos" style="border-left: 4px solid ${p.color}">` +
-                `${p.name} (${PLAYER_COLOR_NAMES[p.index]}): 位置 ${p.position || '起點'}` +
+                `${p.name} (${colorName}): 位置 ${p.position || '起點'}` +
                 `${p.isComputer ? ' 🤖' : ''}</div>`;
         });
         playerPositionsDiv.innerHTML = posHtml;
@@ -178,6 +315,12 @@ const Game = (() => {
     }
 
     function onSpinResult(value) {
+        // Handle turn order phase (value is player index in this mode)
+        if (turnOrderPhase) {
+            onTurnOrderResult(value);
+            return;
+        }
+
         if (!gameActive || isProcessing) return;
         isProcessing = true;
 
@@ -251,7 +394,8 @@ const Game = (() => {
     }
 
     function showWin(player) {
-        winMessage.textContent = `${player.name} (${PLAYER_COLOR_NAMES[player.index]}) 獲勝！🎉`;
+        const colorName = PLAYER_COLOR_NAMES[player.colorIndex];
+        winMessage.textContent = `${player.name} (${colorName}) 獲勝！🎉`;
         winMessage.style.color = player.color;
         winScreen.classList.remove('hidden');
     }

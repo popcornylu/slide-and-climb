@@ -7,10 +7,15 @@ const Spinner = (() => {
     let enabled = true;
     let logicalSize = 0;
 
-    const SEGMENTS = 6;
-    const SEGMENT_ANGLE = (Math.PI * 2) / SEGMENTS;
-    const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
-    const NUMBERS = [1, 2, 3, 4, 5, 6];
+    // Default mode: numbers 1-6
+    let mode = 'numbers';
+    let segments = 6;
+    let segmentAngle = (Math.PI * 2) / 6;
+    let segmentColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+    let segmentLabels = ['1', '2', '3', '4', '5', '6'];
+
+    // Player mode data
+    let playerData = null;
 
     function init(canvasEl) {
         canvas = canvasEl;
@@ -48,31 +53,45 @@ const Spinner = (() => {
         onResult = cb;
     }
 
+    // Set player mode for turn order determination
+    function setPlayerMode(players) {
+        mode = 'players';
+        playerData = players;
+        segments = players.length;
+        segmentAngle = (Math.PI * 2) / segments;
+        segmentColors = players.map(p => p.color);
+        segmentLabels = players.map(p => p.name);
+        draw();
+    }
+
+    // Reset to number mode (1-6)
+    function setNumberMode() {
+        mode = 'numbers';
+        playerData = null;
+        segments = 6;
+        segmentAngle = (Math.PI * 2) / 6;
+        segmentColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+        segmentLabels = ['1', '2', '3', '4', '5', '6'];
+        draw();
+    }
+
     function spin() {
         if (spinning) return;
         spinning = true;
 
-        // Determine result first
-        const result = Math.floor(Math.random() * 6) + 1;
-        const resultIdx = result - 1;
+        // Determine result first (0-indexed)
+        const resultIdx = Math.floor(Math.random() * segments);
 
         // We want the center of segment resultIdx to be at -PI/2 (top, under pointer).
-        // Segment i is drawn at currentAngle + i*SEGMENT_ANGLE to currentAngle + (i+1)*SEGMENT_ANGLE.
-        // Center of segment resultIdx on screen = currentAngle + resultIdx*SEGMENT_ANGLE + SEGMENT_ANGLE/2
-        // We need: finalAngle + resultIdx*SEGMENT_ANGLE + SEGMENT_ANGLE/2 = -PI/2 (mod 2PI)
-        // finalAngle = -PI/2 - resultIdx*SEGMENT_ANGLE - SEGMENT_ANGLE/2 + 2*PI*k
-        const baseTarget = -Math.PI / 2 - resultIdx * SEGMENT_ANGLE - SEGMENT_ANGLE / 2;
+        const baseTarget = -Math.PI / 2 - resultIdx * segmentAngle - segmentAngle / 2;
 
         // Add randomness within segment (so it doesn't always land dead center)
-        const jitter = (Math.random() - 0.5) * SEGMENT_ANGLE * 0.6;
+        const jitter = (Math.random() - 0.5) * segmentAngle * 0.6;
 
-        // Add multiple full rotations for visual effect, always spinning "forward" (decreasing angle = clockwise)
+        // Add multiple full rotations for visual effect
         const extraRotations = (5 + Math.floor(Math.random() * 3)) * Math.PI * 2;
 
-        // Compute final angle: go to baseTarget + jitter, then subtract extra rotations
-        // to ensure we spin clockwise past the target multiple times
         let finalAngle = baseTarget + jitter;
-        // Make sure finalAngle is below currentAngle by enough rotations
         while (finalAngle > currentAngle) {
             finalAngle -= Math.PI * 2;
         }
@@ -85,7 +104,6 @@ const Spinner = (() => {
         function animate(now) {
             const elapsed = now - startTime;
             const t = Math.min(1, elapsed / duration);
-            // Ease out cubic
             const eased = 1 - Math.pow(1 - t, 3);
             currentAngle = startAngle + (finalAngle - startAngle) * eased;
             draw();
@@ -97,6 +115,8 @@ const Spinner = (() => {
                 spinning = false;
                 draw();
                 if (onResult) {
+                    // In number mode, return 1-6; in player mode, return player index
+                    const result = mode === 'numbers' ? resultIdx + 1 : resultIdx;
                     onResult(result);
                 }
             }
@@ -116,22 +136,22 @@ const Spinner = (() => {
         ctx.clearRect(0, 0, w, h);
 
         // Draw segments
-        for (let i = 0; i < SEGMENTS; i++) {
-            const startA = currentAngle + i * SEGMENT_ANGLE;
-            const endA = startA + SEGMENT_ANGLE;
+        for (let i = 0; i < segments; i++) {
+            const startA = currentAngle + i * segmentAngle;
+            const endA = startA + segmentAngle;
 
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.arc(cx, cy, radius, startA, endA);
             ctx.closePath();
-            ctx.fillStyle = COLORS[i];
+            ctx.fillStyle = segmentColors[i];
             ctx.fill();
             ctx.strokeStyle = '#FFF';
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw number
-            const textAngle = startA + SEGMENT_ANGLE / 2;
+            // Draw label
+            const textAngle = startA + segmentAngle / 2;
             const textR = radius * 0.65;
             const tx = cx + Math.cos(textAngle) * textR;
             const ty = cy + Math.sin(textAngle) * textR;
@@ -143,9 +163,9 @@ const Spinner = (() => {
             ctx.textBaseline = 'middle';
 
             ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
             ctx.shadowBlur = 3;
-            ctx.fillText(NUMBERS[i], tx, ty);
+            ctx.fillText(segmentLabels[i], tx, ty);
             ctx.restore();
         }
 
@@ -189,6 +209,8 @@ const Spinner = (() => {
         setEnabled,
         setOnResult,
         triggerSpin,
+        setPlayerMode,
+        setNumberMode,
         get spinning() { return spinning; }
     };
 })();

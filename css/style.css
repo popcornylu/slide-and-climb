@@ -30,59 +30,140 @@ html, body {
     justify-content: center;
     height: 100%;
     padding: 20px;
-    gap: 20px;
 }
 
 #setup-screen h1 {
     font-size: 2.5rem;
     color: #FFEAA7;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 24px;
 }
 
-#player-count-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.2rem;
-}
-
-#player-count {
-    font-size: 1.2rem;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 2px solid #4ECDC4;
-    background: #16213e;
-    color: #eee;
-    cursor: pointer;
-}
-
-#player-settings {
+/* Step 1: Player Count */
+#step1-player-count {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    max-width: 320px;
+    align-items: center;
+    gap: 24px;
 }
 
-.player-setting {
+.step-content {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.step-label {
+    font-size: 1.2rem;
+    color: #eee;
+}
+
+#player-count-buttons {
+    display: flex;
+    gap: 16px;
+}
+
+.count-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border: 3px solid #4ECDC4;
+    border-radius: 12px;
+    background: transparent;
+    color: #4ECDC4;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.count-btn.selected {
+    background: #4ECDC4;
+    color: #1a1a2e;
+}
+
+.count-btn:active {
+    transform: scale(0.95);
+}
+
+#next-step-btn {
+    padding: 16px 48px;
+    font-size: 1.3rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+    color: #1a1a2e;
+    font-weight: bold;
+    cursor: pointer;
+    min-height: 52px;
+    transition: transform 0.1s;
+}
+
+#next-step-btn:active {
+    transform: scale(0.95);
+}
+
+/* Step 2: Player Settings */
+#step2-player-settings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#player-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    max-width: 400px;
+}
+
+.player-card {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 16px 24px;
     background: #16213e;
-    border-radius: 12px;
+    border-radius: 16px;
+    min-width: 140px;
 }
 
-.color-dot {
-    width: 24px;
-    height: 24px;
+.player-card-header {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #FFEAA7;
+}
+
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-selector {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    flex-shrink: 0;
+    cursor: pointer;
+    border: 3px solid #fff;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.player-label {
-    flex: 1;
-    font-size: 1.1rem;
+.color-selector:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.color-selector:active {
+    transform: scale(0.95);
+}
+
+.color-label {
+    font-size: 1rem;
+    color: #eee;
+    min-width: 24px;
 }
 
 .type-toggle {
@@ -102,9 +183,32 @@ html, body {
     color: #1a1a2e;
 }
 
+.step2-buttons {
+    display: flex;
+    gap: 16px;
+}
+
+#back-btn {
+    padding: 16px 32px;
+    font-size: 1.2rem;
+    border: 2px solid #888;
+    border-radius: 12px;
+    background: transparent;
+    color: #888;
+    font-weight: bold;
+    cursor: pointer;
+    min-height: 52px;
+    transition: all 0.2s;
+}
+
+#back-btn:active {
+    background: #888;
+    color: #1a1a2e;
+}
+
 #start-btn, #restart-btn {
-    padding: 16px 48px;
-    font-size: 1.3rem;
+    padding: 16px 32px;
+    font-size: 1.2rem;
     border: none;
     border-radius: 12px;
     background: linear-gradient(135deg, #4ECDC4, #45B7D1);
@@ -188,6 +292,12 @@ html, body {
     font-size: 0.85rem;
     background: rgba(255,255,255,0.05);
     border-radius: 4px;
+}
+
+.turn-order-title {
+    font-size: 0.8rem;
+    color: #FFEAA7;
+    margin-bottom: 4px;
 }
 
 #spinner-container {

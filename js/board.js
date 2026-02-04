@@ -298,13 +298,13 @@ const Board = (() => {
             ctx.arc(px, py, radius, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Player number
+            // Player number (use name like "P1", "P2")
             const fontSize = Math.max(8, radius * 1.2);
             ctx.fillStyle = '#FFF';
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(idx + 1, px, py);
+            ctx.fillText(player.name.replace('P', ''), px, py);
         });
     }
 
@@ -371,13 +371,12 @@ const Board = (() => {
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.stroke();
 
-            const playerIdx = players.indexOf(player);
             const fontSize = Math.max(8, radius * 1.2);
             ctx.fillStyle = '#FFF';
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(playerIdx + 1, x, y);
+            ctx.fillText(player.name.replace('P', ''), x, y);
 
             if (t < 1) {
                 requestAnimationFrame(step);
