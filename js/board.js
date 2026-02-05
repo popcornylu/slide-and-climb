@@ -114,14 +114,35 @@ const Board = (() => {
 
     function drawCells() {
         const colors = ['#FFF8E7', '#F0E6D3'];
+
+        // Collect ladder and snake start/end cells
+        const ladderStarts = new Set();
+        const ladderEnds = new Set();
+        const snakeStarts = new Set();
+        const snakeEnds = new Set();
+        for (const [start, end] of Object.entries(ladders)) {
+            ladderStarts.add(parseInt(start));
+            ladderEnds.add(end);
+        }
+        for (const [start, end] of Object.entries(snakes)) {
+            snakeStarts.add(parseInt(start));
+            snakeEnds.add(end);
+        }
+
         for (let cell = 1; cell <= 100; cell++) {
             const { row, col } = cellToRowCol(cell);
             const x = boardOriginX + col * cellSize;
             const y = boardOriginY + (ROWS - 1 - row) * cellSize;
 
-            // Alternating cell colors
-            const colorIdx = (row + col) % 2;
-            ctx.fillStyle = colors[colorIdx];
+            // Cell background: green for ladder ends, red for snake ends, else default
+            if (ladderEnds.has(cell)) {
+                ctx.fillStyle = '#C8E6C9'; // light green
+            } else if (snakeEnds.has(cell)) {
+                ctx.fillStyle = '#FFCDD2'; // light red
+            } else {
+                const colorIdx = (row + col) % 2;
+                ctx.fillStyle = colors[colorIdx];
+            }
             ctx.fillRect(x, y, cellSize, cellSize);
 
             // Cell border
@@ -129,10 +150,16 @@ const Board = (() => {
             ctx.lineWidth = 1;
             ctx.strokeRect(x, y, cellSize, cellSize);
 
-            // Cell number
+            // Cell number: green for ladder starts, red for snake starts, else default
             const fontSize = Math.max(8, cellSize * 0.25);
-            ctx.fillStyle = '#888';
-            ctx.font = `${fontSize}px sans-serif`;
+            if (ladderStarts.has(cell)) {
+                ctx.fillStyle = '#2E7D32'; // dark green
+            } else if (snakeStarts.has(cell)) {
+                ctx.fillStyle = '#C62828'; // dark red
+            } else {
+                ctx.fillStyle = '#555';
+            }
+            ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText(cell, x + 2, y + 2);
@@ -156,39 +183,15 @@ const Board = (() => {
         const p1 = getCellCenter(from);
         const p2 = getCellCenter(to);
 
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        const nx = -dy / len * cellSize * 0.2;
-        const ny = dx / len * cellSize * 0.2;
-
+        // Simple green line
         ctx.strokeStyle = '#4CAF50';
-        ctx.lineWidth = Math.max(2, cellSize * 0.06);
+        ctx.lineWidth = Math.max(3, cellSize * 0.08);
         ctx.lineCap = 'round';
 
-        // Left rail
         ctx.beginPath();
-        ctx.moveTo(p1.x + nx, p1.y + ny);
-        ctx.lineTo(p2.x + nx, p2.y + ny);
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
-
-        // Right rail
-        ctx.beginPath();
-        ctx.moveTo(p1.x - nx, p1.y - ny);
-        ctx.lineTo(p2.x - nx, p2.y - ny);
-        ctx.stroke();
-
-        // Rungs
-        const numRungs = Math.max(3, Math.floor(len / (cellSize * 0.5)));
-        for (let i = 1; i < numRungs; i++) {
-            const t = i / numRungs;
-            const rx = p1.x + dx * t;
-            const ry = p1.y + dy * t;
-            ctx.beginPath();
-            ctx.moveTo(rx + nx, ry + ny);
-            ctx.lineTo(rx - nx, ry - ny);
-            ctx.stroke();
-        }
 
         // Arrow at the top
         drawArrow(p2.x, p2.y, '#4CAF50');
@@ -198,48 +201,20 @@ const Board = (() => {
         const p1 = getCellCenter(from);
         const p2 = getCellCenter(to);
 
-        // Draw a wavy line for the snake
+        // Simple red line
         ctx.strokeStyle = '#F44336';
-        ctx.lineWidth = Math.max(3, cellSize * 0.1);
+        ctx.lineWidth = Math.max(3, cellSize * 0.08);
         ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        const segments = 20;
-        const amplitude = cellSize * 0.25;
-        const nx = -dy / len;
-        const ny = dx / len;
 
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
-        for (let i = 1; i <= segments; i++) {
-            const t = i / segments;
-            const mx = p1.x + dx * t;
-            const my = p1.y + dy * t;
-            const wave = Math.sin(t * Math.PI * 4) * amplitude * (1 - t * 0.5);
-            ctx.lineTo(mx + nx * wave, my + ny * wave);
-        }
+        ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
 
-        // Snake head (circle at 'from')
+        // Circle at the head (from)
         ctx.fillStyle = '#D32F2F';
         ctx.beginPath();
-        ctx.arc(p1.x, p1.y, cellSize * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Snake eyes
-        ctx.fillStyle = '#FFF';
-        ctx.beginPath();
-        ctx.arc(p1.x - cellSize * 0.06, p1.y - cellSize * 0.04, cellSize * 0.04, 0, Math.PI * 2);
-        ctx.arc(p1.x + cellSize * 0.06, p1.y - cellSize * 0.04, cellSize * 0.04, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(p1.x - cellSize * 0.06, p1.y - cellSize * 0.04, cellSize * 0.02, 0, Math.PI * 2);
-        ctx.arc(p1.x + cellSize * 0.06, p1.y - cellSize * 0.04, cellSize * 0.02, 0, Math.PI * 2);
+        ctx.arc(p1.x, p1.y, cellSize * 0.12, 0, Math.PI * 2);
         ctx.fill();
     }
 
