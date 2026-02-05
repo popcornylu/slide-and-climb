@@ -38,6 +38,7 @@
 
     <!-- Game Screen -->
     <div id="game-screen" class="hidden">
+        <button id="pause-btn">⏸</button>
         <div id="game-layout">
             <div id="board-container">
                 <canvas id="board-canvas"></canvas>
@@ -55,6 +56,18 @@
         </div>
     </div>
 
+    <!-- Pause Screen Overlay -->
+    <div id="pause-screen" class="hidden">
+        <div id="pause-content">
+            <h2>遊戲暫停</h2>
+            <div class="pause-buttons">
+                <button id="resume-btn">繼續遊玩</button>
+                <button id="pause-restart-btn">重新開始</button>
+                <button id="end-game-btn">結束遊戲</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Win Screen Overlay -->
     <div id="win-screen" class="hidden">
         <div id="win-content">
@@ -64,7 +77,7 @@
     </div>
 
     <!-- Version -->
-    <div id="version">v1.0.0</div>
+    <div id="version">v1.1.0</div>
 
     <script src="js/board.js"></script>
     <script src="js/player.js"></script>

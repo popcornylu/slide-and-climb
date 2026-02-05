@@ -7,6 +7,7 @@ const Game = (() => {
     let currentPlayerIdx = 0;
     let gameActive = false;
     let isProcessing = false;
+    let isPaused = false;
 
     // Turn order determination phase
     let turnOrderPhase = false;
@@ -17,8 +18,9 @@ const Game = (() => {
     let playerColorIndices = [0, 1, 2, 3]; // Each player's color index
 
     // DOM elements (initialized in init())
-    let setupScreen, gameScreen, winScreen, winMessage;
+    let setupScreen, gameScreen, winScreen, winMessage, pauseScreen;
     let step1, step2, playerCards, startBtn, restartBtn, nextStepBtn, backBtn;
+    let pauseBtn, resumeBtn, pauseRestartBtn, endGameBtn;
     let currentTurnDiv, playerPositionsDiv, spinHint;
 
     function init() {
@@ -26,6 +28,7 @@ const Game = (() => {
         gameScreen = document.getElementById('game-screen');
         winScreen = document.getElementById('win-screen');
         winMessage = document.getElementById('win-message');
+        pauseScreen = document.getElementById('pause-screen');
         step1 = document.getElementById('step1-player-count');
         step2 = document.getElementById('step2-player-settings');
         playerCards = document.getElementById('player-cards');
@@ -33,6 +36,10 @@ const Game = (() => {
         restartBtn = document.getElementById('restart-btn');
         nextStepBtn = document.getElementById('next-step-btn');
         backBtn = document.getElementById('back-btn');
+        pauseBtn = document.getElementById('pause-btn');
+        resumeBtn = document.getElementById('resume-btn');
+        pauseRestartBtn = document.getElementById('pause-restart-btn');
+        endGameBtn = document.getElementById('end-game-btn');
         currentTurnDiv = document.getElementById('current-turn');
         playerPositionsDiv = document.getElementById('player-positions');
         spinHint = document.getElementById('spin-hint');
@@ -50,6 +57,10 @@ const Game = (() => {
         backBtn.addEventListener('click', showStep1);
         startBtn.addEventListener('click', startGame);
         restartBtn.addEventListener('click', restartGame);
+        pauseBtn.addEventListener('click', pauseGame);
+        resumeBtn.addEventListener('click', resumeGame);
+        pauseRestartBtn.addEventListener('click', pauseRestart);
+        endGameBtn.addEventListener('click', endGame);
 
         Board.init(document.getElementById('board-canvas'));
         Spinner.init(document.getElementById('spinner-canvas'));
@@ -243,7 +254,44 @@ const Game = (() => {
         showStep1();
         gameActive = false;
         turnOrderPhase = false;
+        isPaused = false;
         Spinner.setNumberMode();
+    }
+
+    function pauseGame() {
+        if (!gameActive && !turnOrderPhase) return;
+        isPaused = true;
+        pauseScreen.classList.remove('hidden');
+        Spinner.setEnabled(false);
+    }
+
+    function resumeGame() {
+        isPaused = false;
+        pauseScreen.classList.add('hidden');
+        if (gameActive && !isProcessing) {
+            const cp = players[currentPlayerIdx];
+            if (!cp.isComputer) {
+                Spinner.setEnabled(true);
+            }
+        }
+    }
+
+    function pauseRestart() {
+        pauseScreen.classList.add('hidden');
+        isPaused = false;
+        // Reset game state and restart with same settings
+        players.forEach(p => p.position = 0);
+        currentPlayerIdx = 0;
+        gameActive = false;
+        isProcessing = false;
+        turnOrderPhase = true;
+        Board.draw(players);
+        startTurnOrderSpin();
+    }
+
+    function endGame() {
+        pauseScreen.classList.add('hidden');
+        restartGame();
     }
 
     function handleResize() {
@@ -304,7 +352,7 @@ const Game = (() => {
     }
 
     function startTurn() {
-        if (!gameActive || isProcessing) return;
+        if (!gameActive || isProcessing || isPaused) return;
 
         const cp = players[currentPlayerIdx];
         updateUI();
@@ -321,7 +369,7 @@ const Game = (() => {
             return;
         }
 
-        if (!gameActive || isProcessing) return;
+        if (!gameActive || isProcessing || isPaused) return;
         isProcessing = true;
 
         Spinner.setEnabled(false);
