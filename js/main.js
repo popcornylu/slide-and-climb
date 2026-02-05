@@ -138,10 +138,10 @@ const Game = (() => {
 
             const toggle = document.createElement('button');
             toggle.className = 'type-toggle';
-            // P1 is always computer and cannot be changed
+            // P1 is always player and cannot be changed
             if (i === 0) {
-                toggle.textContent = '電腦';
-                toggle.dataset.isComputer = 'true';
+                toggle.textContent = '玩家';
+                toggle.dataset.isComputer = 'false';
                 toggle.disabled = true;
                 toggle.style.opacity = '0.6';
                 toggle.style.cursor = 'not-allowed';
