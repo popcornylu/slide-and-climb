@@ -79,6 +79,9 @@ const Spinner = (() => {
         if (spinning) return;
         spinning = true;
 
+        // Resume audio context on user interaction
+        Sound.resume();
+
         // Determine result first (0-indexed)
         const resultIdx = Math.floor(Math.random() * segments);
 
@@ -100,12 +103,21 @@ const Spinner = (() => {
         const startAngle = currentAngle;
         const duration = 3000 + Math.random() * 1000;
         const startTime = performance.now();
+        let lastTickAngle = startAngle;
 
         function animate(now) {
             const elapsed = now - startTime;
             const t = Math.min(1, elapsed / duration);
             const eased = 1 - Math.pow(1 - t, 3);
             currentAngle = startAngle + (finalAngle - startAngle) * eased;
+
+            // Play tick sound when passing segment boundaries
+            const angleMoved = Math.abs(currentAngle - lastTickAngle);
+            if (angleMoved >= segmentAngle * 0.8) {
+                Sound.spinnerTick();
+                lastTickAngle = currentAngle;
+            }
+
             draw();
 
             if (t < 1) {
@@ -114,6 +126,7 @@ const Spinner = (() => {
                 currentAngle = finalAngle;
                 spinning = false;
                 draw();
+                Sound.spinnerResult();
                 if (onResult) {
                     // In number mode, return 1-6; in player mode, return player index
                     const result = mode === 'numbers' ? resultIdx + 1 : resultIdx;

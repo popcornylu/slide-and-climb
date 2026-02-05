@@ -375,6 +375,7 @@ const Game = (() => {
             if (Board.ladders[newPos]) {
                 const dest = Board.ladders[newPos];
                 spinHint.textContent = `梯子！${newPos} → ${dest}`;
+                Sound.ladderClimb();
                 setTimeout(() => {
                     Board.animateTransport(cp, newPos, dest, players, () => {
                         cp.position = dest;
@@ -384,6 +385,7 @@ const Game = (() => {
             } else if (Board.snakes[newPos]) {
                 const dest = Board.snakes[newPos];
                 spinHint.textContent = `滑梯！${newPos} → ${dest}`;
+                Sound.snakeSlide();
                 setTimeout(() => {
                     Board.animateTransport(cp, newPos, dest, players, () => {
                         cp.position = dest;
@@ -421,6 +423,7 @@ const Game = (() => {
         winMessage.textContent = `${player.name} (${colorName}) 獲勝！🎉`;
         winMessage.style.color = player.color;
         winScreen.classList.remove('hidden');
+        Sound.win();
     }
 
     // Init on DOM ready

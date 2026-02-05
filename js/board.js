@@ -308,6 +308,7 @@ const Board = (() => {
             }
             player.position = cells[step];
             draw(players);
+            Sound.step();
             step++;
             setTimeout(nextStep, stepDuration);
         }
