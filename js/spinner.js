@@ -103,7 +103,7 @@ const Spinner = (() => {
         const startAngle = currentAngle;
         const duration = 3000 + Math.random() * 1000;
         const startTime = performance.now();
-        let lastTickAngle = startAngle;
+        let lastSegment = getSegmentAtPointer(startAngle);
 
         function animate(now) {
             const elapsed = now - startTime;
@@ -111,11 +111,11 @@ const Spinner = (() => {
             const eased = 1 - Math.pow(1 - t, 3);
             currentAngle = startAngle + (finalAngle - startAngle) * eased;
 
-            // Play tick sound when passing segment boundaries
-            const angleMoved = Math.abs(currentAngle - lastTickAngle);
-            if (angleMoved >= segmentAngle * 0.8) {
+            // Play tick sound when crossing segment boundary
+            const currentSegment = getSegmentAtPointer(currentAngle);
+            if (currentSegment !== lastSegment) {
                 Sound.spinnerTick();
-                lastTickAngle = currentAngle;
+                lastSegment = currentSegment;
             }
 
             draw();
@@ -207,6 +207,16 @@ const Spinner = (() => {
         ctx.strokeStyle = '#555';
         ctx.lineWidth = 3;
         ctx.stroke();
+    }
+
+    // Get which segment is under the pointer (top) at given wheel angle
+    function getSegmentAtPointer(angle) {
+        // Pointer is at -PI/2 (top). Normalize angle to find segment.
+        const pointerAngle = -Math.PI / 2;
+        let relativeAngle = pointerAngle - angle;
+        // Normalize to [0, 2*PI)
+        relativeAngle = ((relativeAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        return Math.floor(relativeAngle / segmentAngle) % segments;
     }
 
     function triggerSpin() {
