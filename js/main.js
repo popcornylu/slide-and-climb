@@ -138,13 +138,22 @@ const Game = (() => {
 
             const toggle = document.createElement('button');
             toggle.className = 'type-toggle';
-            toggle.textContent = i === 0 ? '玩家' : '電腦';
-            toggle.dataset.isComputer = i === 0 ? 'false' : 'true';
-            toggle.addEventListener('click', () => {
-                const isComp = toggle.dataset.isComputer === 'true';
-                toggle.dataset.isComputer = (!isComp).toString();
-                toggle.textContent = !isComp ? '電腦' : '玩家';
-            });
+            // P1 is always computer and cannot be changed
+            if (i === 0) {
+                toggle.textContent = '電腦';
+                toggle.dataset.isComputer = 'true';
+                toggle.disabled = true;
+                toggle.style.opacity = '0.6';
+                toggle.style.cursor = 'not-allowed';
+            } else {
+                toggle.textContent = '電腦';
+                toggle.dataset.isComputer = 'true';
+                toggle.addEventListener('click', () => {
+                    const isComp = toggle.dataset.isComputer === 'true';
+                    toggle.dataset.isComputer = (!isComp).toString();
+                    toggle.textContent = !isComp ? '電腦' : '玩家';
+                });
+            }
 
             card.appendChild(header);
             card.appendChild(colorRow);
@@ -165,13 +174,13 @@ const Game = (() => {
             players[i].colorIndex = colorIndex;
         }
 
-        currentPlayerIdx = 0;
-        gameActive = false;
-        isProcessing = false;
+        // Randomly shuffle player order
+        shuffleArray(players);
 
-        // Start turn order determination phase
-        turnOrderPhase = true;
-        firstPlayerIdx = 0;
+        currentPlayerIdx = 0;
+        gameActive = true;
+        isProcessing = false;
+        turnOrderPhase = false;
 
         Board.generateBoard();
 
@@ -182,50 +191,25 @@ const Game = (() => {
         // Short delay to ensure layout is ready after display change
         requestAnimationFrame(() => {
             handleResize();
-            startTurnOrderSpin();
+            Spinner.setNumberMode();
+            showRandomOrderAndStart();
         });
     }
 
-    function startTurnOrderSpin() {
-        // Set spinner to player mode
-        Spinner.setPlayerMode(players);
-        Spinner.setEnabled(false);
-
-        currentTurnDiv.innerHTML = `<span class="turn-indicator">🎲 決定誰先開始...</span>`;
-
-        let posHtml = '<div class="turn-order-title">參賽玩家：</div>';
-        players.forEach(p => {
-            const colorName = PLAYER_COLOR_NAMES[p.colorIndex];
-            posHtml += `<div class="player-pos" style="border-left: 4px solid ${p.color}">` +
-                `${p.name} (${colorName})${p.isComputer ? ' 🤖' : ''}</div>`;
-        });
-        playerPositionsDiv.innerHTML = posHtml;
-
-        spinHint.textContent = '轉動中...';
-
-        // Auto spin after a short delay
-        setTimeout(() => {
-            Spinner.triggerSpin();
-        }, 800);
-    }
-
-    function onTurnOrderResult(winnerIdx) {
-        const winner = players[winnerIdx];
-        const winnerColorName = PLAYER_COLOR_NAMES[winner.colorIndex];
-
-        spinHint.textContent = `${winner.name} (${winnerColorName}) 先開始！`;
-        currentTurnDiv.innerHTML = `<span class="turn-indicator" style="color:${winner.color}">` +
-            `🎉 ${winner.name} (${winnerColorName}) 先開始！</span>`;
-
-        // Reorder players so winner goes first
-        // e.g., if winnerIdx=2 and we have [P1,P2,P3,P4], new order is [P3,P4,P1,P2]
-        const reordered = [];
-        for (let i = 0; i < players.length; i++) {
-            reordered.push(players[(winnerIdx + i) % players.length]);
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
         }
-        players = reordered;
+    }
 
-        // Show final order
+    function showRandomOrderAndStart() {
+        const first = players[0];
+        const firstColorName = PLAYER_COLOR_NAMES[first.colorIndex];
+
+        currentTurnDiv.innerHTML = `<span class="turn-indicator" style="color:${first.color}">` +
+            `🎲 ${first.name} (${firstColorName}) 先開始！</span>`;
+
         let posHtml = '<div class="turn-order-title">遊戲順序：</div>';
         players.forEach((p, idx) => {
             const colorName = PLAYER_COLOR_NAMES[p.colorIndex];
@@ -234,17 +218,12 @@ const Game = (() => {
         });
         playerPositionsDiv.innerHTML = posHtml;
 
-        setTimeout(() => {
-            // Switch spinner back to number mode
-            Spinner.setNumberMode();
+        spinHint.textContent = '';
 
-            // End turn order phase, start actual game
-            turnOrderPhase = false;
-            currentPlayerIdx = 0;
-            gameActive = true;
+        setTimeout(() => {
             updateUI();
             startTurn();
-        }, 2000);
+        }, 1500);
     }
 
     function restartGame() {
@@ -259,7 +238,7 @@ const Game = (() => {
     }
 
     function pauseGame() {
-        if (!gameActive && !turnOrderPhase) return;
+        if (!gameActive) return;
         isPaused = true;
         pauseScreen.classList.remove('hidden');
         Spinner.setEnabled(false);
@@ -281,12 +260,14 @@ const Game = (() => {
         isPaused = false;
         // Reset game state and restart with same settings
         players.forEach(p => p.position = 0);
+        shuffleArray(players);
         currentPlayerIdx = 0;
-        gameActive = false;
+        gameActive = true;
         isProcessing = false;
-        turnOrderPhase = true;
+        turnOrderPhase = false;
+        Board.generateBoard();
         Board.draw(players);
-        startTurnOrderSpin();
+        showRandomOrderAndStart();
     }
 
     function endGame() {
@@ -363,12 +344,6 @@ const Game = (() => {
     }
 
     function onSpinResult(value) {
-        // Handle turn order phase (value is player index in this mode)
-        if (turnOrderPhase) {
-            onTurnOrderResult(value);
-            return;
-        }
-
         if (!gameActive || isProcessing || isPaused) return;
         isProcessing = true;
 
