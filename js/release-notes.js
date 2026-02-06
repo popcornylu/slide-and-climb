@@ -1,5 +1,13 @@
 const ReleaseNotes = [
     {
+        version: 'v1.8.0',
+        date: '2025-02-06',
+        notes: [
+            '新增彩虹梯子直通第 100 格',
+            '按 x 鍵可快速測試勝利畫面',
+        ]
+    },
+    {
         version: 'v1.7.0',
         date: '2025-02-06',
         notes: [

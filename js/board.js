@@ -16,6 +16,12 @@ const Board = (() => {
         snakes = {};
         const used = new Set([1, 100]); // never place on start or finish
 
+        // Special rainbow ladder to 100: start from row 6-8 (cells 61-80)
+        const rainbowStart = randInt(61, 80);
+        used.add(rainbowStart);
+        used.add(100);
+        ladders[rainbowStart] = 100;
+
         // Generate ladders (bottom in rows 1-8, top must be higher row)
         let placed = 0;
         while (placed < NUM_LADDERS) {
@@ -190,10 +196,21 @@ const Board = (() => {
     function drawLadder(from, to) {
         const p1 = getCellCenter(from);
         const p2 = getCellCenter(to);
+        const isRainbow = to === 100;
 
-        // Simple green line
-        ctx.strokeStyle = '#4CAF50';
-        ctx.lineWidth = Math.max(3, cellSize * 0.08);
+        if (isRainbow) {
+            const gradient = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+            gradient.addColorStop(0, '#FF6B6B');
+            gradient.addColorStop(0.25, '#FECA57');
+            gradient.addColorStop(0.5, '#48DBFB');
+            gradient.addColorStop(0.75, '#FF9FF3');
+            gradient.addColorStop(1, '#54A0FF');
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = Math.max(5, cellSize * 0.12);
+        } else {
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = Math.max(3, cellSize * 0.08);
+        }
         ctx.lineCap = 'round';
 
         ctx.beginPath();
@@ -202,7 +219,7 @@ const Board = (() => {
         ctx.stroke();
 
         // Arrow at the top
-        drawArrow(p2.x, p2.y, '#4CAF50');
+        drawArrow(p2.x, p2.y, isRainbow ? '#FECA57' : '#4CAF50');
     }
 
     function drawSnake(from, to) {
