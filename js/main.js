@@ -71,6 +71,17 @@ const Game = (() => {
         window.addEventListener('orientationchange', () => {
             setTimeout(handleResize, 100);
         });
+
+        // Debug: press 'x' to trigger win screen
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'x' && gameActive && !isPaused) {
+                const cp = players[currentPlayerIdx];
+                cp.position = 100;
+                gameActive = false;
+                isProcessing = false;
+                showWin(cp);
+            }
+        });
     }
 
     function showStep1() {
