@@ -32,12 +32,13 @@ A web-based Snakes and Ladders board game, deployed on GitHub Pages.
 
 ## Deploy Workflow (MUST follow on every deploy)
 1. Bump version in `index.html` (`#version` div)
-2. Add new entry at the TOP of `ReleaseNotes` array in `js/release-notes.js` with:
-   - `version`: new version string (e.g. 'v1.6.0')
+2. Update all `?v=` cache bust query strings in `index.html` (CSS and JS references) to match new version
+3. Add new entry at the TOP of `ReleaseNotes` array in `js/release-notes.js` with:
+   - `version`: new version string (e.g. 'v1.8.0')
    - `date`: today's date (YYYY-MM-DD)
    - `notes`: array of change descriptions in Chinese
-3. Update `CLAUDE.md` version number (this file, "Current:" line above)
-4. `git add` changed files, commit, and `git push origin main`
+4. Update `CLAUDE.md` version number (this file, "Current:" line above)
+5. `git add` changed files, commit, and `git push origin main`
 
 ## Deployment
 - `git push origin main` triggers GitHub Pages deployment
