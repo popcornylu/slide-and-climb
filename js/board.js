@@ -299,7 +299,7 @@ const Board = (() => {
         }
 
         let step = 0;
-        const stepDuration = 150;
+        const stepDuration = 500;
 
         function nextStep() {
             if (step >= cells.length) {

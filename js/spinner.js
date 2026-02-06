@@ -17,6 +17,10 @@ const Spinner = (() => {
     // Player mode data
     let playerData = null;
 
+    // Highlight state: which segment is highlighted (-1 = none, during spin = current segment)
+    let highlightedSegment = -1;
+    let showResult = false;
+
     function init(canvasEl) {
         canvas = canvasEl;
         ctx = canvas.getContext('2d');
@@ -45,8 +49,8 @@ const Spinner = (() => {
 
     function setEnabled(val) {
         enabled = val;
-        canvas.style.opacity = val ? '1' : '0.5';
         canvas.style.cursor = val ? 'pointer' : 'default';
+        // Don't change opacity - let the highlight effect handle visual feedback
     }
 
     function setOnResult(cb) {
@@ -72,12 +76,15 @@ const Spinner = (() => {
         segmentAngle = (Math.PI * 2) / 6;
         segmentColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
         segmentLabels = ['1', '2', '3', '4', '5', '6'];
+        highlightedSegment = -1;
+        showResult = false;
         draw();
     }
 
     function spin() {
         if (spinning) return;
         spinning = true;
+        showResult = false;
 
         // Resume audio context on user interaction
         Sound.resume();
@@ -101,7 +108,7 @@ const Spinner = (() => {
         finalAngle -= extraRotations;
 
         const startAngle = currentAngle;
-        const duration = 3000 + Math.random() * 1000;
+        const duration = 4500 + Math.random() * 1500;
         const startTime = performance.now();
         let lastSegment = getSegmentAtPointer(startAngle);
 
@@ -111,8 +118,9 @@ const Spinner = (() => {
             const eased = 1 - Math.pow(1 - t, 3);
             currentAngle = startAngle + (finalAngle - startAngle) * eased;
 
-            // Play tick sound when crossing segment boundary
+            // Update highlighted segment and play tick sound when crossing boundary
             const currentSegment = getSegmentAtPointer(currentAngle);
+            highlightedSegment = currentSegment;
             if (currentSegment !== lastSegment) {
                 Sound.spinnerTick();
                 lastSegment = currentSegment;
@@ -125,8 +133,18 @@ const Spinner = (() => {
             } else {
                 currentAngle = finalAngle;
                 spinning = false;
+                showResult = true;
+                highlightedSegment = resultIdx;
                 draw();
                 Sound.spinnerResult();
+
+                // Reset highlight after 1.5 seconds
+                setTimeout(() => {
+                    showResult = false;
+                    highlightedSegment = -1;
+                    draw();
+                }, 1500);
+
                 if (onResult) {
                     // In number mode, return 1-6; in player mode, return player index
                     const result = mode === 'numbers' ? resultIdx + 1 : resultIdx;
@@ -153,13 +171,25 @@ const Spinner = (() => {
             const startA = currentAngle + i * segmentAngle;
             const endA = startA + segmentAngle;
 
+            const isHighlighted = (spinning || showResult) && (i === highlightedSegment);
+            const isDimmed = showResult && !isHighlighted;
+
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.arc(cx, cy, radius, startA, endA);
             ctx.closePath();
-            ctx.fillStyle = segmentColors[i];
+
+            // Apply color with dimming effect
+            let color = segmentColors[i];
+            if (isDimmed) {
+                color = dimColor(color, 0.4);
+            } else if (isHighlighted && spinning) {
+                color = brightenColor(color, 1.2);
+            }
+            ctx.fillStyle = color;
             ctx.fill();
-            ctx.strokeStyle = '#FFF';
+
+            ctx.strokeStyle = isDimmed ? '#666' : '#FFF';
             ctx.lineWidth = 2;
             ctx.stroke();
 
@@ -170,14 +200,14 @@ const Spinner = (() => {
             const ty = cy + Math.sin(textAngle) * textR;
 
             const fontSize = Math.max(14, radius * 0.3);
-            ctx.fillStyle = '#FFF';
+            ctx.fillStyle = isDimmed ? 'rgba(255,255,255,0.4)' : '#FFF';
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             ctx.save();
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 3;
+            ctx.shadowBlur = isHighlighted ? 5 : 3;
             ctx.fillText(segmentLabels[i], tx, ty);
             ctx.restore();
         }
@@ -207,6 +237,28 @@ const Spinner = (() => {
         ctx.strokeStyle = '#555';
         ctx.lineWidth = 3;
         ctx.stroke();
+    }
+
+    // Dim a color by multiplying RGB values
+    function dimColor(hex, factor) {
+        const rgb = hexToRgb(hex);
+        return `rgb(${Math.floor(rgb.r * factor)}, ${Math.floor(rgb.g * factor)}, ${Math.floor(rgb.b * factor)})`;
+    }
+
+    // Brighten a color
+    function brightenColor(hex, factor) {
+        const rgb = hexToRgb(hex);
+        return `rgb(${Math.min(255, Math.floor(rgb.r * factor))}, ${Math.min(255, Math.floor(rgb.g * factor))}, ${Math.min(255, Math.floor(rgb.b * factor))})`;
+    }
+
+    // Convert hex color to RGB
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : { r: 128, g: 128, b: 128 };
     }
 
     // Get which segment is under the pointer (top) at given wheel angle

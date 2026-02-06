@@ -369,8 +369,9 @@ const Game = (() => {
             return;
         }
 
-        // Animate movement
-        Board.animateMove(cp, currentPos, newPos, players, () => {
+        // Animate movement (delay 1 second after spin result)
+        setTimeout(() => {
+            Board.animateMove(cp, currentPos, newPos, players, () => {
             // Check for snake or ladder
             if (Board.ladders[newPos]) {
                 const dest = Board.ladders[newPos];
@@ -397,6 +398,7 @@ const Game = (() => {
                 checkWinOrNext();
             }
         });
+        }, 1000);
     }
 
     function checkWinOrNext() {
