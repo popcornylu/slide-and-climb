@@ -424,6 +424,23 @@ const Game = (() => {
         const colorName = PLAYER_COLOR_NAMES[player.colorIndex];
         winMessage.textContent = `${player.name} (${colorName}) 獲勝！🎉`;
         winMessage.style.color = player.color;
+
+        // Build ranking: winner first, then sort others by position descending
+        const others = players.filter(p => p !== player).sort((a, b) => b.position - a.position);
+        const ranked = [player, ...others];
+        const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+
+        const rankingList = document.getElementById('ranking-list');
+        rankingList.innerHTML = '';
+        ranked.forEach((p, i) => {
+            const cn = PLAYER_COLOR_NAMES[p.colorIndex];
+            const div = document.createElement('div');
+            div.className = 'ranking-item';
+            div.style.borderLeftColor = p.color;
+            div.innerHTML = `${medals[i] || ''} ${p.name} (${cn})${p.isComputer ? ' 🤖' : ''}<span class="ranking-pos">位置 ${p.position}</span>`;
+            rankingList.appendChild(div);
+        });
+
         winScreen.classList.remove('hidden');
         Sound.win();
     }

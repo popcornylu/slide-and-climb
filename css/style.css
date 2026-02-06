@@ -367,7 +367,29 @@ html, body {
 
 #win-message {
     font-size: 2rem;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+}
+
+#ranking-list {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.ranking-item {
+    padding: 8px 12px;
+    margin: 6px 0;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    border-left: 4px solid #eee;
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ranking-pos {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
 }
 
 /* Pause Screen */

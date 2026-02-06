@@ -25,7 +25,7 @@ A web-based Snakes and Ladders board game, deployed on GitHub Pages.
 - Snake start cells have red number text, end cells have red background
 
 ## Version & Release Notes
-- Current: v1.6.0
+- Current: v1.7.0
 - Format: semver, displayed in index.html `#version` div
 - Release notes viewable in-game by clicking the version number (bottom-right)
 - Release notes data stored in `js/release-notes.js`

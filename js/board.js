@@ -134,8 +134,16 @@ const Board = (() => {
             const x = boardOriginX + col * cellSize;
             const y = boardOriginY + (ROWS - 1 - row) * cellSize;
 
-            // Cell background: green for ladder ends, red for snake ends, else default
-            if (ladderEnds.has(cell)) {
+            // Cell background: rainbow for 100, green for ladder ends, red for snake ends, else default
+            if (cell === 100) {
+                const gradient = ctx.createLinearGradient(x, y, x + cellSize, y + cellSize);
+                gradient.addColorStop(0, '#FF6B6B');
+                gradient.addColorStop(0.25, '#FECA57');
+                gradient.addColorStop(0.5, '#48DBFB');
+                gradient.addColorStop(0.75, '#FF9FF3');
+                gradient.addColorStop(1, '#54A0FF');
+                ctx.fillStyle = gradient;
+            } else if (ladderEnds.has(cell)) {
                 ctx.fillStyle = '#C8E6C9'; // light green
             } else if (snakeEnds.has(cell)) {
                 ctx.fillStyle = '#FFCDD2'; // light red

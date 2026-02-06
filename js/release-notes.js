@@ -1,5 +1,23 @@
 const ReleaseNotes = [
     {
+        version: 'v1.7.0',
+        date: '2025-02-06',
+        notes: [
+            '加入蛇的音效（snake.mp3）',
+            '加入勝利音效（win.mp3）',
+            '勝利畫面顯示排名結算',
+            '第 100 格改為彩色背景',
+            '新增 /dev.html 音效測試頁面',
+        ]
+    },
+    {
+        version: 'v1.6.1',
+        date: '2025-02-06',
+        notes: [
+            '加入蛇的音效（snake.mp3）',
+        ]
+    },
+    {
         version: 'v1.6.0',
         date: '2025-02-06',
         notes: [
