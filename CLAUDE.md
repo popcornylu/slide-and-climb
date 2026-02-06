@@ -11,10 +11,11 @@ A web-based Snakes and Ladders board game, deployed on GitHub Pages.
 ## Project Structure
 - `index.html` - Main game page, version displayed in `#version` div
 - `css/style.css` - Styles
-- `js/main.js` - Game logic, player setup, turn management
+- `js/main.js` - Game logic, player setup, turn management, release notes UI
 - `js/board.js` - Board rendering, cell colors, movement animation
 - `js/spinner.js` - Spinner canvas with segment highlighting/dimming
 - `js/sound.js` - Audio system (file-based with Web Audio API fallback)
+- `js/release-notes.js` - Release notes data (viewable in-game by clicking version)
 - `sounds/` - Audio files (tick.mp3, result.mp3, step.mp3, ladder.mp3)
 
 ## Key Rules
@@ -23,10 +24,20 @@ A web-based Snakes and Ladders board game, deployed on GitHub Pages.
 - Ladder start cells have green number text, end cells have green background
 - Snake start cells have red number text, end cells have red background
 
-## Version
-- Current: v1.5.0
+## Version & Release Notes
+- Current: v1.6.0
 - Format: semver, displayed in index.html `#version` div
-- Remember to update version on each deploy
+- Release notes viewable in-game by clicking the version number (bottom-right)
+- Release notes data stored in `js/release-notes.js`
+
+## Deploy Workflow (MUST follow on every deploy)
+1. Bump version in `index.html` (`#version` div)
+2. Add new entry at the TOP of `ReleaseNotes` array in `js/release-notes.js` with:
+   - `version`: new version string (e.g. 'v1.6.0')
+   - `date`: today's date (YYYY-MM-DD)
+   - `notes`: array of change descriptions in Chinese
+3. Update `CLAUDE.md` version number (this file, "Current:" line above)
+4. `git add` changed files, commit, and `git push origin main`
 
 ## Deployment
 - `git push origin main` triggers GitHub Pages deployment

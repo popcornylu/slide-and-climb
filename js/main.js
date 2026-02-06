@@ -428,11 +428,42 @@ const Game = (() => {
         Sound.win();
     }
 
+    // Release Notes
+    function initReleaseNotes() {
+        const versionDiv = document.getElementById('version');
+        const rnScreen = document.getElementById('release-notes-screen');
+        const rnList = document.getElementById('release-notes-list');
+        const rnClose = document.getElementById('release-notes-close');
+
+        versionDiv.addEventListener('click', () => {
+            rnList.innerHTML = '';
+            ReleaseNotes.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'rn-version';
+                let html = `<div class="rn-version-header">${r.version}<span>${r.date}</span></div><ul>`;
+                r.notes.forEach(n => { html += `<li>${n}</li>`; });
+                html += '</ul>';
+                div.innerHTML = html;
+                rnList.appendChild(div);
+            });
+            rnScreen.classList.remove('hidden');
+        });
+
+        rnClose.addEventListener('click', () => {
+            rnScreen.classList.add('hidden');
+        });
+
+        rnScreen.addEventListener('click', (e) => {
+            if (e.target === rnScreen) rnScreen.classList.add('hidden');
+        });
+    }
+
     // Init on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => { init(); initReleaseNotes(); });
     } else {
         init();
+        initReleaseNotes();
     }
 
     return { players };
