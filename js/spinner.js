@@ -6,6 +6,10 @@ const Spinner = (() => {
     let onResult = null;
     let enabled = true;
     let logicalSize = 0;
+    let paused = false;
+    let pausedAt = 0;
+    let accumulatedPause = 0;
+    let animationId = null;
 
     // Default mode: numbers 1-6
     let mode = 'numbers';
@@ -109,11 +113,17 @@ const Spinner = (() => {
 
         const startAngle = currentAngle;
         const duration = 4500 + Math.random() * 1500;
-        const startTime = performance.now();
+        let startTime = performance.now();
         let lastSegment = getSegmentAtPointer(startAngle);
+        accumulatedPause = 0;
 
         function animate(now) {
-            const elapsed = now - startTime;
+            if (paused) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
+
+            const elapsed = now - startTime - accumulatedPause;
             const t = Math.min(1, elapsed / duration);
             const eased = 1 - Math.pow(1 - t, 3);
             currentAngle = startAngle + (finalAngle - startAngle) * eased;
@@ -129,10 +139,11 @@ const Spinner = (() => {
             draw();
 
             if (t < 1) {
-                requestAnimationFrame(animate);
+                animationId = requestAnimationFrame(animate);
             } else {
                 currentAngle = finalAngle;
                 spinning = false;
+                animationId = null;
                 showResult = true;
                 highlightedSegment = resultIdx;
                 draw();
@@ -153,7 +164,7 @@ const Spinner = (() => {
             }
         }
 
-        requestAnimationFrame(animate);
+        animationId = requestAnimationFrame(animate);
     }
 
     function draw() {
@@ -277,6 +288,20 @@ const Spinner = (() => {
         }
     }
 
+    function pause() {
+        if (!paused) {
+            paused = true;
+            pausedAt = performance.now();
+        }
+    }
+
+    function unpause() {
+        if (paused) {
+            accumulatedPause += performance.now() - pausedAt;
+            paused = false;
+        }
+    }
+
     return {
         init,
         resize,
@@ -286,6 +311,8 @@ const Spinner = (() => {
         triggerSpin,
         setPlayerMode,
         setNumberMode,
+        pause,
+        unpause,
         get spinning() { return spinning; }
     };
 })();

@@ -67,6 +67,9 @@ const Board = (() => {
 
     let canvas, ctx;
     let cellSize = 0;
+    let paused = false;
+    let pausedAt = 0;
+    let accumulatedPause = 0;
     let boardOriginX = 0;
     let boardOriginY = 0;
     let logicalWidth = 0;
@@ -285,22 +288,22 @@ const Board = (() => {
                 py += offsets[groupIdx].dy * cellSize;
             }
 
-            // Draw player token
+            // Draw player token: white fill, colored border, colored text
             const radius = cellSize * 0.2;
-            ctx.fillStyle = player.color;
+            ctx.fillStyle = '#FFF';
             ctx.beginPath();
             ctx.arc(px, py, radius, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = '#FFF';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = player.color;
+            ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(px, py, radius, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Player number (use name like "P1", "P2")
+            // Player number
             const fontSize = Math.max(8, radius * 1.2);
-            ctx.fillStyle = '#FFF';
+            ctx.fillStyle = player.color;
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -327,6 +330,10 @@ const Board = (() => {
         const stepDuration = 500;
 
         function nextStep() {
+            if (paused) {
+                setTimeout(nextStep, 50);
+                return;
+            }
             if (step >= cells.length) {
                 callback();
                 return;
@@ -346,10 +353,15 @@ const Board = (() => {
         const from = getCellCenter(fromCell);
         const to = getCellCenter(toCell);
         const duration = 500;
-        const startTime = performance.now();
+        let startTime = performance.now();
+        accumulatedPause = 0;
 
         function step(now) {
-            const t = Math.min(1, (now - startTime) / duration);
+            if (paused) {
+                requestAnimationFrame(step);
+                return;
+            }
+            const t = Math.min(1, (now - startTime - accumulatedPause) / duration);
             const eased = t * t * (3 - 2 * t); // smoothstep
             const x = from.x + (to.x - from.x) * eased;
             const y = from.y + (to.y - from.y) * eased;
@@ -362,18 +374,18 @@ const Board = (() => {
 
             // Draw the moving token
             const radius = cellSize * 0.2;
-            ctx.fillStyle = player.color;
+            ctx.fillStyle = '#FFF';
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = '#FFF';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = player.color;
+            ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.stroke();
 
             const fontSize = Math.max(8, radius * 1.2);
-            ctx.fillStyle = '#FFF';
+            ctx.fillStyle = player.color;
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -391,6 +403,20 @@ const Board = (() => {
         requestAnimationFrame(step);
     }
 
+    function pause() {
+        if (!paused) {
+            paused = true;
+            pausedAt = performance.now();
+        }
+    }
+
+    function unpause() {
+        if (paused) {
+            accumulatedPause += performance.now() - pausedAt;
+            paused = false;
+        }
+    }
+
     return {
         init,
         resize,
@@ -400,6 +426,8 @@ const Board = (() => {
         cellToRowCol,
         animateMove,
         animateTransport,
+        pause,
+        unpause,
         get ladders() { return ladders; },
         get snakes() { return snakes; },
         get cellSize() { return cellSize; }

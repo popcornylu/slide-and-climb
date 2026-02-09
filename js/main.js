@@ -23,6 +23,24 @@ const Game = (() => {
     let pauseBtn, resumeBtn, pauseRestartBtn, endGameBtn;
     let currentTurnDiv, playerPositionsDiv, spinHint;
 
+    // Pause-aware delay: waits extra while paused
+    function pauseDelay(ms, cb) {
+        const start = performance.now();
+        function check() {
+            if (isPaused) {
+                setTimeout(check, 50);
+                return;
+            }
+            const elapsed = performance.now() - start;
+            if (elapsed >= ms) {
+                cb();
+            } else {
+                setTimeout(check, Math.min(50, ms - elapsed));
+            }
+        }
+        setTimeout(check, ms);
+    }
+
     function init() {
         setupScreen = document.getElementById('setup-screen');
         gameScreen = document.getElementById('game-screen');
@@ -70,6 +88,18 @@ const Game = (() => {
         window.addEventListener('resize', handleResize);
         window.addEventListener('orientationchange', () => {
             setTimeout(handleResize, 100);
+        });
+
+        // Auto-pause when page loses focus
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && gameActive && !isPaused) {
+                pauseGame();
+            }
+        });
+        window.addEventListener('blur', () => {
+            if (gameActive && !isPaused) {
+                pauseGame();
+            }
         });
 
         // Debug: press 'x' to trigger win screen
@@ -253,11 +283,17 @@ const Game = (() => {
         isPaused = true;
         pauseScreen.classList.remove('hidden');
         Spinner.setEnabled(false);
+        Spinner.pause();
+        Board.pause();
+        Sound.pause();
     }
 
     function resumeGame() {
         isPaused = false;
         pauseScreen.classList.add('hidden');
+        Spinner.unpause();
+        Board.unpause();
+        Sound.unpause();
         if (gameActive && !isProcessing) {
             const cp = players[currentPlayerIdx];
             if (!cp.isComputer) {
@@ -373,37 +409,37 @@ const Game = (() => {
         // Must land exactly on 100
         if (newPos > 100) {
             spinHint.textContent = `轉到 ${value}，超過 100，不動！`;
-            setTimeout(() => {
+            pauseDelay(1000, () => {
                 isProcessing = false;
                 nextPlayer();
-            }, 1000);
+            });
             return;
         }
 
         // Animate movement (delay 1 second after spin result)
-        setTimeout(() => {
+        pauseDelay(1000, () => {
             Board.animateMove(cp, currentPos, newPos, players, () => {
             // Check for snake or ladder
             if (Board.ladders[newPos]) {
                 const dest = Board.ladders[newPos];
                 spinHint.textContent = `梯子！${newPos} → ${dest}`;
                 Sound.ladderClimb();
-                setTimeout(() => {
+                pauseDelay(400, () => {
                     Board.animateTransport(cp, newPos, dest, players, () => {
                         cp.position = dest;
                         checkWinOrNext();
                     });
-                }, 400);
+                });
             } else if (Board.snakes[newPos]) {
                 const dest = Board.snakes[newPos];
                 spinHint.textContent = `滑梯！${newPos} → ${dest}`;
                 Sound.snakeSlide();
-                setTimeout(() => {
+                pauseDelay(400, () => {
                     Board.animateTransport(cp, newPos, dest, players, () => {
                         cp.position = dest;
                         checkWinOrNext();
                     });
-                }, 400);
+                });
             } else {
                 cp.position = newPos;
                 checkWinOrNext();
@@ -420,10 +456,10 @@ const Game = (() => {
             showWin(cp);
             return;
         }
-        setTimeout(() => {
+        pauseDelay(500, () => {
             isProcessing = false;
             nextPlayer();
-        }, 500);
+        });
     }
 
     function nextPlayer() {

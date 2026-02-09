@@ -17,6 +17,18 @@ const Sound = (() => {
         }
     }
 
+    function pause() {
+        if (audioCtx && audioCtx.state === 'running') {
+            audioCtx.suspend();
+        }
+    }
+
+    function unpause() {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
     // Preloaded audio buffers for Web Audio API (lower latency)
     const audioBuffers = {};
 
@@ -213,6 +225,8 @@ const Sound = (() => {
 
     return {
         resume,
+        pause,
+        unpause,
         spinnerTick,
         spinnerResult,
         step,
